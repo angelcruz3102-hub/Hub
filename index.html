@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mi Hub Personal</title>
+    <style>
+        /* Reset y optimización para interfaces táctiles */
+        * { box-sizing: border-box; margin: 0; padding: 0; touch-action: manipulation; }
+        body { font-family: system-ui, sans-serif; display: flex; flex-direction: column; height: 100vh; overflow: hidden; background: #121212; color: #ffffff; }
+        
+        /* Contenedor principal de la app */
+        #app-frame { flex: 1; width: 100%; border: none; background: #ffffff; }
+        
+        /* Barra de navegación inferior scrollable */
+        #bottom-nav { display: flex; background: #1e1e1e; padding: 10px; gap: 8px; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; border-top: 1px solid #333; }
+        #bottom-nav::-webkit-scrollbar { display: none; }
+        
+        /* Botones táctiles de gran tamaño */
+        .nav-btn { flex: 1; min-width: 100px; padding: 15px; background: #2c2c2c; color: #e0e0e0; border: none; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
+        .nav-btn.active { background: #007bff; color: white; }
+    </style>
+</head>
+<body>
+
+    <iframe id="app-frame" src="https://URL_DE_TU_CASA.com"></iframe>
+
+    <nav id="bottom-nav">
+        <button class="nav-btn active" onclick="loadApp('https://URL_DE_TU_CASA.com', this)">Casa</button>
+        <button class="nav-btn" onclick="loadApp('https://URL_DE_APUNTES.com', this)">Apuntes</button>
+        <button class="nav-btn" onclick="loadApp('https://URL_DE_UNIVERSIDAD.com', this)">Uni</button>
+        <button class="nav-btn" onclick="loadApp('https://URL_DE_HORARIO.com', this)">Horario</button>
+    </nav>
+
+    <script>
+        // Lógica Vanilla JS para cambiar de aplicación sin recargar el Hub
+        function loadApp(url, btn) {
+            document.getElementById('app-frame').src = url;
+            
+            // Actualizar estado visual de los botones
+            const buttons = document.querySelectorAll('.nav-btn');
+            for (let i = 0; i < buttons.length; i++) {
+                buttons[i].classList.remove('active');
+            }
+            btn.classList.add('active');
+        }
+    </script>
+</body>
+</html>
