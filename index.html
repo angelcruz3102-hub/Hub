@@ -3,68 +3,177 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Workspace Personal</title>
+    <title>Mi Panel de Apps</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; touch-action: manipulation; }
-        body { font-family: system-ui, -apple-system, sans-serif; display: flex; flex-direction: column; height: 100vh; overflow: hidden; background: #121212; color: #fff; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: #121212; color: #fff; min-height: 100vh; display: flex; flex-direction: column; }
         
-        /* Contenedor del visor */
-        #viewer-container { flex: 1; width: 100%; position: relative; background: #1e1e1e; }
-        iframe { width: 100%; height: 100%; border: none; background: #fff; display: block; }
+        /* VISTA PANEL DE CONTROL */
+        #dashboard { padding: 20px; flex: 1; max-width: 800px; width: 100%; margin: 0 auto; }
+        h1 { font-size: 24px; margin-bottom: 20px; color: #007bff; }
         
-        /* Estado cuando no hay app cargada */
-        #placeholder { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: #888; font-size: 16px; }
-        
-        /* Barra de herramientas superior rápida */
-        #top-bar { display: flex; justify-content: space-between; align-items: center; background: #1a1a1a; padding: 8px 16px; border-bottom: 1px solid #333; font-size: 14px; }
-        #external-link { color: #007bff; text-decoration: none; font-weight: bold; padding: 6px 12px; background: #222; border-radius: 4px; display: none; }
+        /* Formulario para añadir apps */
+        .form-container { background: #1e1e1e; padding: 15px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #333; }
+        .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 10px; }
+        input, select, button { padding: 12px; border-radius: 8px; border: 1px solid #444; background: #2a2a2a; color: #fff; font-size: 14px; }
+        input:focus, select:focus { border-color: #007bff; outline: none; }
+        .btn-add { background: #007bff; border: none; font-weight: bold; cursor: pointer; width: 100%; }
+        .btn-add:active { background: #0056b3; }
 
-        /* Barra de navegación inferior táctil */
-        #bottom-nav { display: flex; background: #161616; padding: 12px; gap: 10px; overflow-x: auto; border-top: 1px solid #2d2d2d; }
-        #bottom-nav::-webkit-scrollbar { display: none; }
+        /* Categorías y Cuadritos (Grid) */
+        .category-section { margin-bottom: 30px; }
+        .category-title { font-size: 18px; font-weight: bold; margin-bottom: 15px; color: #aaa; border-bottom: 1px solid #333; padding-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
+        .apps-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
         
-        .nav-btn { flex: 1; min-width: 110px; padding: 14px; background: #262626; color: #aaa; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; text-align: center; }
-        .nav-btn.active { background: #007bff; color: #fff; }
+        /* Tarjeta de la app (Cuadrito) */
+        .app-card { background: #1e1e1e; border: 1px solid #333; border-radius: 12px; padding: 20px 10px; text-align: center; cursor: pointer; position: relative; transition: transform 0.1s; }
+        .app-card:active { transform: scale(0.95); background: #252525; }
+        .app-logo { width: 48px; height: 48px; border-radius: 10px; margin-bottom: 12px; background: #333; object-fit: contain; }
+        .app-name { font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .btn-delete { position: absolute; top: 5px; right: 5px; background: none; border: none; color: #ff4d4d; font-size: 16px; cursor: pointer; padding: 5px; }
+
+        /* VISTA DEL VISOR (IFRAME) */
+        #viewer { display: none; flex-direction: column; height: 100vh; width: 100vw; position: fixed; top: 0; left: 0; background: #fff; z-index: 100; }
+        #top-bar { display: flex; align-items: center; background: #1a1a1a; padding: 10px; border-bottom: 1px solid #333; color: #fff; }
+        .btn-back { background: #333; border: none; padding: 8px 16px; margin-right: 15px; font-weight: bold; }
+        #app-frame { flex: 1; width: 100%; border: none; }
     </style>
 </head>
 <body>
 
-    <div id="top-bar">
-        <span id="app-title">Selecciona una aplicación</span>
-        <a id="external-link" target="_blank" href="#">Abrir pantalla completa ↗</a>
+    <div id="dashboard">
+        <h1>Mi Workspace Dinámico</h1>
+        
+        <div class="form-container">
+            <div class="form-row">
+                <input type="text" id="app-input-name" placeholder="Nombre de la app" required>
+                <input type="url" id="app-input-url" placeholder="https://url-del-sistema.com" required>
+                <select id="app-input-category">
+                    <option value="Estudio">📚 Estudio</option>
+                    <option value="Negocios">💼 Negocios</option>
+                    <option value="Personal">🏠 Personal</option>
+                    <option value="Otros">⚙️ Otros</option>
+                </select>
+            </div>
+            <button class="btn-add" onclick="addApp()">+ Agregar al Panel</button>
+        </div>
+
+        <div id="categories-container"></div>
     </div>
 
-    <div id="viewer-container">
-        <div id="placeholder">Toca una aplicación abajo para iniciar</div>
-        <iframe id="app-frame" style="display: none;"></iframe>
+    <div id="viewer">
+        <div id="top-bar">
+            <button class="btn-back" onclick="closeApp()">← Volver al Hub</button>
+            <span id="current-app-title">Aplicación</span>
+        </div>
+        <iframe id="app-frame"></iframe>
     </div>
-
-    <nav id="bottom-nav">
-        <button class="nav-btn" onclick="openApp('https://TU-USUARIO.github.io/mi-casa/', 'Control Casa', this)">🏠 Casa</button>
-        <button class="nav-btn" onclick="openApp('https://TU-USUARIO.github.io/apuntes-ia/', 'Apuntes IA', this)">🎙️ Apuntes</button>
-        <button class="nav-btn" onclick="openApp('https://TU-USUARIO.github.io/universidad/', 'Pensum Uni', this)">🎓 Universidad</button>
-        <button class="nav-btn" onclick="openApp('https://TU-USUARIO.github.io/horario/', 'Mi Horario', this)">📅 Horario</button>
-    </nav>
 
     <script>
-        function openApp(url, title, btn) {
-            // Ocultar placeholder y mostrar iframe
-            document.getElementById('placeholder').style.display = 'none';
-            const frame = document.getElementById('app-frame');
-            frame.style.display = 'block';
-            frame.src = url;
+        // Apps iniciales por defecto si el almacenamiento está vacío
+        const defaultApps = [
+            { id: 1, name: "Control Casa", url: "https://example.com/casa", category: "Personal" },
+            { id: 2, name: "Apuntes IA", url: "https://example.com/apuntes", category: "Estudio" },
+            { id: 3, name: "Pensum Uni", url: "https://example.com/universidad", category: "Estudio" },
+            { id: 4, name: "Horario", url: "https://example.com/horario", category: "Personal" }
+        ];
 
-            // Actualizar barra superior
-            document.getElementById('app-title').innerText = title;
-            const extLink = document.getElementById('external-link');
-            extLink.href = url;
-            extLink.style.display = 'block';
+        // Cargar apps desde localStorage o usar las por defecto
+        let myApps = JSON.parse(localStorage.getItem('myHubApps')) || defaultApps;
 
-            // Cambiar estado del botón activo
-            const buttons = document.querySelectorAll('.nav-btn');
-            buttons.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
+        function renderHub() {
+            const container = document.getElementById('categories-container');
+            container.innerHTML = '';
+
+            // Agrupar aplicaciones por categoría
+            const grouped = {};
+            myApps.forEach(app => {
+                if (!grouped[app.category]) grouped[app.category] = [];
+                grouped[app.category].push(app);
+            });
+
+            // Renderizar cada categoría y sus cuadritos
+            for (const category in grouped) {
+                const section = document.createElement('div');
+                section.className = 'category-section';
+                
+                section.innerHTML = `
+                    <div class="category-title">${category}</div>
+                    <div class="apps-grid">
+                        ${grouped[category].map(app => {
+                            // Obtener favicon de forma automática usando la API de Google
+                            const domain = new URL(app.url).hostname;
+                            const logoUrl = `https://www.google.com/s2/favicons?sz=128&domain=${domain}`;
+                            
+                            return `
+                                <div class="app-card" onclick="openApp('${app.url}', '${app.name}')">
+                                    <button class="btn-delete" onclick="deleteApp(event, ${app.id})">×</button>
+                                    <img class="app-logo" src="${logoUrl}" alt="logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/561/561122.png'">
+                                    <div class="app-name">${app.name}</div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+                container.appendChild(section);
+            }
+            
+            // Guardar estado actual
+            localStorage.setItem('myHubApps', JSON.stringify(myApps));
         }
+
+        function addApp() {
+            const nameInput = document.getElementById('app-input-name');
+            const urlInput = document.getElementById('app-input-url');
+            const catInput = document.getElementById('app-input-category');
+
+            if (!nameInput.value || !urlInput.value) {
+                alert("Por favor rellena el nombre y la URL.");
+                return;
+            }
+
+            // Validar y formatear URL de forma básica
+            let url = urlInput.value.trim();
+            if (!/^https?:\/\//i.test(url)) {
+                url = 'https://' + url;
+            }
+
+            const newApp = {
+                id: Date.now(), // ID único basado en tiempo
+                name: nameInput.value.trim(),
+                url: url,
+                category: catInput.value
+            };
+
+            myApps.push(newApp);
+            renderHub();
+
+            // Limpiar formulario
+            nameInput.value = '';
+            urlInput.value = '';
+        }
+
+        function deleteApp(event, id) {
+            event.stopPropagation(); // Evita que se abra la app al presionar borrar
+            if (confirm("¿Seguro que quieres eliminar esta aplicación del panel?")) {
+                myApps = myApps.filter(app => app.id !== id);
+                renderHub();
+            }
+        }
+
+        function openApp(url, name) {
+            document.getElementById('current-app-title').innerText = name;
+            document.getElementById('app-frame').src = url;
+            document.getElementById('viewer').style.display = 'flex';
+        }
+
+        function closeApp() {
+            document.getElementById('viewer').style.display = 'none';
+            document.getElementById('app-frame').src = ''; // Limpiar iframe para ahorrar recursos
+        }
+
+        // Ejecutar renderizado al cargar la página
+        renderHub();
     </script>
 </body>
 </html>
